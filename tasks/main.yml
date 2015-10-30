@@ -1,0 +1,67 @@
+---
+
+- name: Install NGINX repo rpm on Centos 6
+  yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+  when: ansible_distribution == "CentOS"
+
+- name: Install NGINX on Centos 6
+  yum: name=nginx state=latest
+  when: ansible_distribution == "CentOS"
+  notify:
+    - restart nginx
+
+- name: Create new directory on Centos 6
+  when: ansible_distribution == "CentOS"
+  file: dest=/var/www/{{ domain1 }}/public_html mode=755 state=directory
+
+- name: Create index page on Centos 6
+  when: ansible_distribution == "CentOS"
+  template: src=index.html dest=/var/www/{{ domain1 }}/public_html/ mode=644
+
+- name: Config nginx on Centos 6
+  when: ansible_distribution == "CentOS"
+  template: src=centos_nginx.conf dest=/etc/nginx/conf.d/{{ domain1 }}.conf
+  notify:
+    - restart nginx
+
+- name: Ensure NGINX is running on Centos 6
+  service:
+     name: nginx
+     state: started
+  when: ansible_distribution == "CentOS"
+
+- name: Install NGINX webserver on Ubuntu
+  when: ansible_distribution == "Ubuntu"
+  apt: pkg=nginx state=installed update_cache=true
+  notify:
+    - start nginx
+
+- name: Create new directory on Ubuntu
+  when: ansible_distribution == "Ubuntu"
+  file: dest=/var/www/{{ domain }}/html mode=755 state=directory
+
+- name: Create index page on Ubuntu
+  when: ansible_distribution == "Ubuntu"
+  template: src=index_ubuntu.html dest=/var/www/{{ domain }}/html/index.html mode=0644
+
+- name: Config nginx on Ubuntu
+  when: ansible_distribution == "Ubuntu"
+  template: src=ubuntu_nginx.conf dest=/etc/nginx/sites-available/{{ domain }}
+  notify:
+    - reload nginx
+
+- name: Enable Server Block
+  when: ansible_distribution == "Ubuntu"
+  file: src=/etc/nginx/sites-available/{{ domain }} dest=/etc/nginx/sites-enabled/{{ domain }} state=link
+
+- name: Disable Default Site
+  when: ansible_distribution == "Ubuntu"
+  file: dest=/etc/nginx/sites-enabled/default state=absent
+  notify:
+    - restart nginx
+
+- name: Ensure nginx is running on Ubuntu
+  service:
+     name: nginx
+     state: started
+  when: ansible_distribution == "Ubuntu"

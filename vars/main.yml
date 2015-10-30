@@ -1,0 +1,3 @@
+port: 8088
+domain: ubuntu_example.com
+domain1: centos_example.com
